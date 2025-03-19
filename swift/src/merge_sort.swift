@@ -1,63 +1,58 @@
-#!/usr/bin/swift
+import Foundation
 
-/// Implementation of merge sort algorithm in Swift
+/// Merge sort implementation in Swift
 /// Time complexity: O(n log n)
 /// Space complexity: O(n)
-func mergeSort<T: Comparable>(_ arr: [T]) -> [T] {
+func mergeSort(_ arr: [Int]) -> [Int] {
     if arr.count <= 1 {
         return arr
     }
 
-    // Split array into two halves
     let mid = arr.count / 2
     let left = Array(arr[..<mid])
     let right = Array(arr[mid...])
 
-    // Recursively sort both halves
     return merge(mergeSort(left), mergeSort(right))
 }
 
-/// Helper function to merge two sorted arrays into a single sorted array
-func merge<T: Comparable>(_ left: [T], _ right: [T]) -> [T] {
-    var result = [T]()
-    result.reserveCapacity(left.count + right.count)
-    var i = 0
-    var j = 0
+/// Helper function to merge two sorted arrays
+func merge(_ left: [Int], _ right: [Int]) -> [Int] {
+    var result: [Int] = []
+    var leftIndex = 0
+    var rightIndex = 0
 
-    // Compare elements from both arrays and merge them
-    while i < left.count && j < right.count {
-        if left[i] <= right[j] {
-            result.append(left[i])
-            i += 1
+    while leftIndex < left.count && rightIndex < right.count {
+        if left[leftIndex] <= right[rightIndex] {
+            result.append(left[leftIndex])
+            leftIndex += 1
         } else {
-            result.append(right[j])
-            j += 1
+            result.append(right[rightIndex])
+            rightIndex += 1
         }
     }
 
-    // Copy remaining elements from left array
-    result.append(contentsOf: left[i...])
-
-    // Copy remaining elements from right array
-    result.append(contentsOf: right[j...])
+    // Add remaining elements
+    result.append(contentsOf: left[leftIndex...])
+    result.append(contentsOf: right[rightIndex...])
 
     return result
 }
 
-// Check if file path is provided
-guard CommandLine.arguments.count > 1 else {
-    print("Please provide a file path as an argument", to: &stderr)
-    exit(1)
-}
-
+// Main program
 do {
+    // Check if file path is provided
+    guard CommandLine.arguments.count > 1 else {
+        fputs("Please provide a file path as an argument\n", stderr)
+        exit(1)
+    }
+
     // Read numbers from file
     let filePath = CommandLine.arguments[1]
     let fileContent = try String(contentsOfFile: filePath, encoding: .utf8)
     let numbers = fileContent
-        .components(separatedBy: .newlines)
+        .components(separatedBy: CharacterSet.newlines)
         .filter { !$0.isEmpty }
-        .compactMap { Int($0.trimmingCharacters(in: .whitespaces)) }
+        .compactMap { Int($0.trimmingCharacters(in: CharacterSet.whitespaces)) }
 
     // Sort the array
     let sortedNumbers = mergeSort(numbers)
@@ -66,9 +61,10 @@ do {
     try sortedNumbers
         .map { String($0) }
         .joined(separator: "\n")
-        .write(toFile: "sorted_data.txt", atomically: true, encoding: .utf8)
+        .data(using: .utf8)?
+        .write(to: URL(fileURLWithPath: "sorted_data.txt"))
 } catch {
-    print("Error: \(error.localizedDescription)", to: &stderr)
+    fputs("Error: \(error)\n", stderr)
     exit(1)
 }
 

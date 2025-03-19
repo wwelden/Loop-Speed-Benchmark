@@ -97,19 +97,19 @@ run_benchmark "Java" "java -cp java/src MergeSort benchmark_input.txt" \
 run_benchmark "Python" "python3 python/src/merge_sort.py benchmark_input.txt"
 
 # JavaScript setup
-if [ ! -d "javascript/node_modules" ]; then
+if [ ! -d "js/node_modules" ]; then
     echo "Setting up JavaScript dependencies..."
-    cd javascript && npm init -y && npm install && cd ..
+    cd js && npm init -y && npm install && cd ..
 fi
-run_benchmark "JavaScript" "node javascript/src/merge_sort.js benchmark_input.txt"
+run_benchmark "JavaScript" "node js/src/merge_sort.js benchmark_input.txt"
 
 # TypeScript setup
 if [ ! -d "typescript/node_modules" ]; then
     echo "Setting up TypeScript dependencies..."
     cd typescript && npm init -y && npm install typescript ts-node @types/node && cd ..
 fi
-run_benchmark "TypeScript" "ts-node typescript/src/merge_sort.ts benchmark_input.txt" \
-    "cd typescript && npx tsc src/merge_sort.ts && cd .."
+# run_benchmark "TypeScript" "ts-node typescript/src/merge_sort.ts benchmark_input.txt" \
+#     "cd typescript && npx tsc src/merge_sort.ts && cd .."
 
 run_benchmark "Go" "go run go/src/merge_sort.go benchmark_input.txt"
 
@@ -125,14 +125,6 @@ run_benchmark "Perl" "perl perl/src/merge_sort.pl benchmark_input.txt"
 
 run_benchmark "Lua" "lua lua/src/merge_sort.lua benchmark_input.txt"
 
-# COBOL setup
-if ! command_exists "cobc"; then
-    echo -e "${RED}Warning: COBOL compiler (cobc) is not installed${NC}"
-else
-    run_benchmark "COBOL" "./cobol/src/merge_sort benchmark_input.txt" \
-        "cobc -x -o cobol/src/merge_sort cobol/src/merge_sort.cbl"
-fi
-
 # Rust setup
 if [ ! -f "rust/Cargo.toml" ]; then
     echo "Setting up Rust project..."
@@ -142,13 +134,8 @@ run_benchmark "Rust" "./rust/target/release/merge_sort benchmark_input.txt" \
     "cd rust && cargo build --release && cd .."
 
 # Swift setup
-if [ ! -f "swift/Package.swift" ]; then
-    echo "Setting up Swift project..."
-    mkdir -p swift/Sources/MergeSort
-    cd swift && swift package init --type executable && cd ..
-fi
-run_benchmark "Swift" "./swift/.build/release/MergeSort benchmark_input.txt" \
-    "cd swift && swift build -c release && cd .."
+run_benchmark "Swift" "./swift/src/merge_sort benchmark_input.txt" \
+    "swiftc -O swift/src/merge_sort.swift -o swift/src/merge_sort"
 
 # Clean up
 rm -f benchmark_input.txt
