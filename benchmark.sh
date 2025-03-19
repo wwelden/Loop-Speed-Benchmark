@@ -1,99 +1,156 @@
 #!/bin/bash
 
-# Generate a large sorted array (1 million elements)
-echo "Generating test data..."
-python3 -c "
-import random
-with open('test_data.txt', 'w') as f:
-    numbers = sorted(random.sample(range(-1000000, 1000000), 1000000))
-    f.write('\n'.join(map(str, numbers)))
-"
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
 
 # Function to check if a command exists
 command_exists() {
     command -v "$1" >/dev/null 2>&1
 }
 
-# Function to run a test and return execution time
-run_test() {
-    local lang=$1
-    local cmd=$2
-    local compiler=$3
-
-    if [ -n "$compiler" ] && ! command_exists "$compiler"; then
-        echo "Skipping $lang (compiler not found: $compiler)" >&2
-        return 1
-    fi
-
-    echo "Running $lang..." >&2
-    local time_output=$(time -p $cmd 2>&1)
-    local real_time=$(echo "$time_output" | grep real | awk '{print $2}')
-    if [ -n "$real_time" ]; then
-        printf "%s\t%s\n" "$lang" "$real_time"
-    fi
+# Function to generate random numbers
+generate_random_numbers() {
+    local size=$1
+    local output_file=$2
+    for ((i=0; i<size; i++)); do
+        echo $((RANDOM % 1000000 - 500000)) >> "$output_file"
+    done
 }
 
-# Run tests for each language
-echo "Running benchmarks..."
+# Function to compile and run benchmark for a language
+run_benchmark() {
+    local lang=$1
+    local cmd=$2
+    local compile_cmd=$3
+    local input_file="benchmark_input.txt"
+    local size=10000  # Size of each array
 
-# Create temporary file to store results
-results_file=$(mktemp)
+    echo -e "${YELLOW}Benchmarking $lang implementation...${NC}"
 
-# Run tests and collect results
-for test in \
-    "JavaScript:node js/src/binary_search.js test_data.txt:node" \
-    "TypeScript:ts-node ts/src/binary_search.ts test_data.txt:ts-node" \
-    "Java:java -cp java/src BinarySearch test_data.txt:javac" \
-    "C:gcc -o c/binary_search c/src/binary_search.c && ./c/binary_search test_data.txt:gcc" \
-    "C++:g++ -std=c++11 -o cpp/binary_search cpp/src/binary_search.cpp && ./cpp/binary_search test_data.txt:g++" \
-    "Haskell:ghc -o haskell/binary_search haskell/src/binary_search.hs && ./haskell/binary_search test_data.txt:ghc" \
-    "Zig:zig build-exe -o zig/binary_search zig/src/binary_search.zig && ./zig/binary_search test_data.txt:zig" \
-    "CSharp:dotnet run --project csharp/src/binary_search.csproj test_data.txt:dotnet" \
-    "Swift:swiftc -o swift/binary_search swift/src/binary_search.swift && ./swift/binary_search test_data.txt:swiftc" \
-    "Lua:lua lua/src/binary_search.lua test_data.txt:lua" \
-    "Scala:scalac -d scala/target/scala/classes scala/src/main/scala/BinarySearch.scala && scala -cp scala/target/scala/classes binarysearch.BinarySearch test_data.txt:scalac" \
-    "Bash:./bash/src/binary_search.sh test_data.txt:bash" \
-    "PHP:php php/src/binary_search.php test_data.txt:php" \
-    "Rust:rustc -o rust/binary_search rust/src/binary_search.rs && ./rust/binary_search test_data.txt:rustc" \
-    "Python:python3 python/src/binary_search.py test_data.txt:python3" \
-    "Go:go run go/src/binary_search.go test_data.txt:go" \
-    "Kotlin:kotlinc kotlin/src/binary_search.kt -include-runtime -d kotlin/binary_search.jar && java -jar kotlin/binary_search.jar test_data.txt:kotlinc" \
-    "Perl:perl perl/src/binary_search.pl test_data.txt:perl" \
-    "Assembly:nasm -f macho64 asm/src/binary_search.asm && ld -o asm/binary_search asm/src/binary_search.o && ./asm/binary_search test_data.txt:nasm" \
-    "R:Rscript r/src/binary_search.R test_data.txt:Rscript"
-do
-    IFS=: read -r lang cmd compiler <<< "$test"
-    output=$(run_test "$lang" "$cmd" "$compiler")
-    if [ $? -eq 0 ]; then
-        echo "$output" >> "$results_file"
+    # Compile if needed
+    if [ -n "$compile_cmd" ]; then
+        echo "Compiling $lang..."
+        if ! eval "$compile_cmd"; then
+            echo -e "${RED}Failed to compile $lang${NC}"
+            return 1
+        fi
+    fi
+
+    # Use time command to measure total execution time
+    { time -p (
+        for ((i=1; i<=100; i++)); do
+            # Generate a new random input file
+            generate_random_numbers $size "$input_file"
+
+            # Run the command
+            if ! eval "$cmd"; then
+                echo -e "${RED}Failed to run $lang${NC}"
+                return 1
+            fi
+
+            # Clean up
+            rm -f "$input_file"
+
+            # Progress indicator
+            if ((i % 10 == 0)); then
+                echo -n "."
+            fi
+        done
+        echo
+    ); } 2> time_output.txt
+
+    # Extract real execution time
+    local total_time=$(grep real time_output.txt | awk '{print $2}')
+    local avg_time=$(echo "scale=6; $total_time/100" | bc)
+
+    # Print results
+    echo -e "${GREEN}$lang:${NC}"
+    echo "Total time: $total_time seconds"
+    echo "Average time per run: $avg_time seconds"
+    echo "----------------------------------------"
+
+    # Clean up
+    rm -f time_output.txt
+}
+
+# Create benchmark directory if it doesn't exist
+mkdir -p benchmark_results
+
+# Check for required compilers and interpreters
+echo "Checking dependencies..."
+for cmd in javac java python3 node npm go gcc g++ php perl lua cargo swiftc cobc; do
+    if ! command_exists "$cmd"; then
+        echo -e "${RED}Warning: $cmd is not installed${NC}"
     fi
 done
 
-# Print results using Python for better formatting
-python3 -c '
-import sys
+# Run benchmarks for each language
+echo -e "${YELLOW}Starting merge sort benchmarks...${NC}"
+echo "----------------------------------------"
 
-print("\nResults (sorted by execution time):")
-print("----------------------------------------")
-print("{:<15}\t{}".format("Language", "Time (seconds)"))
-print("----------------------------------------")
+run_benchmark "Java" "java -cp java/src MergeSort benchmark_input.txt" \
+    "javac -d java/src java/src/MergeSort.java"
 
-results = []
-with open("'"$results_file"'") as f:
-    for line in f:
-        try:
-            parts = line.strip().split("\t")
-            if len(parts) >= 2:
-                lang = parts[0]
-                time = float(parts[1])
-                results.append((lang, time))
-        except (ValueError, IndexError):
-            continue
+run_benchmark "Python" "python3 python/src/merge_sort.py benchmark_input.txt"
 
-for lang, time in sorted(results, key=lambda x: x[1]):
-    print("{:<15}\t{:.2f}".format(lang, time))
-sys.stdout.flush()
-'
+# JavaScript setup
+if [ ! -d "javascript/node_modules" ]; then
+    echo "Setting up JavaScript dependencies..."
+    cd javascript && npm init -y && npm install && cd ..
+fi
+run_benchmark "JavaScript" "node javascript/src/merge_sort.js benchmark_input.txt"
 
-# Cleanup
-rm -f test_data.txt "$results_file"
+# TypeScript setup
+if [ ! -d "typescript/node_modules" ]; then
+    echo "Setting up TypeScript dependencies..."
+    cd typescript && npm init -y && npm install typescript ts-node @types/node && cd ..
+fi
+run_benchmark "TypeScript" "ts-node typescript/src/merge_sort.ts benchmark_input.txt" \
+    "cd typescript && npx tsc src/merge_sort.ts && cd .."
+
+run_benchmark "Go" "go run go/src/merge_sort.go benchmark_input.txt"
+
+run_benchmark "C" "./c/src/merge_sort benchmark_input.txt" \
+    "gcc -o c/src/merge_sort c/src/merge_sort.c"
+
+run_benchmark "C++" "./cpp/src/merge_sort benchmark_input.txt" \
+    "g++ -std=c++11 -o cpp/src/merge_sort cpp/src/merge_sort.cpp"
+
+run_benchmark "PHP" "php php/src/merge_sort.php benchmark_input.txt"
+
+run_benchmark "Perl" "perl perl/src/merge_sort.pl benchmark_input.txt"
+
+run_benchmark "Lua" "lua lua/src/merge_sort.lua benchmark_input.txt"
+
+# COBOL setup
+if ! command_exists "cobc"; then
+    echo -e "${RED}Warning: COBOL compiler (cobc) is not installed${NC}"
+else
+    run_benchmark "COBOL" "./cobol/src/merge_sort benchmark_input.txt" \
+        "cobc -x -o cobol/src/merge_sort cobol/src/merge_sort.cbl"
+fi
+
+# Rust setup
+if [ ! -f "rust/Cargo.toml" ]; then
+    echo "Setting up Rust project..."
+    cd rust && cargo init && cd ..
+fi
+run_benchmark "Rust" "./rust/target/release/merge_sort benchmark_input.txt" \
+    "cd rust && cargo build --release && cd .."
+
+# Swift setup
+if [ ! -f "swift/Package.swift" ]; then
+    echo "Setting up Swift project..."
+    mkdir -p swift/Sources/MergeSort
+    cd swift && swift package init --type executable && cd ..
+fi
+run_benchmark "Swift" "./swift/.build/release/MergeSort benchmark_input.txt" \
+    "cd swift && swift build -c release && cd .."
+
+# Clean up
+rm -f benchmark_input.txt
+
+echo -e "${GREEN}Benchmark completed!${NC}"

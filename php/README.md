@@ -68,3 +68,89 @@ The implementation includes test cases for:
 - Duplicate elements
 - String arrays
 - Null input handling
+
+# Merge Sort Implementation in PHP
+
+This directory contains a PHP implementation of the merge sort algorithm, along with comprehensive tests and documentation.
+
+## Implementation Details
+
+The merge sort implementation is located in `src/merge_sort.php`. The algorithm has the following characteristics:
+
+- Time Complexity: O(n log n)
+- Space Complexity: O(n)
+- Stable sorting algorithm
+- Recursive implementation
+
+### Key Features
+
+- Type-safe implementation with PHP 7+ type hints
+- Comprehensive test coverage
+- Command-line interface for file-based sorting
+- Modular design with separate merge function
+- Modern PHP features and idioms
+- Exception handling for file operations
+- Support for both numeric and string sorting
+
+## Usage
+
+### Running the Program
+
+```bash
+php src/merge_sort.php <input_file>
+```
+
+The sorted output will be written to `sorted_data.txt`.
+
+### Running Tests
+
+```bash
+php src/merge_sort_test.php
+```
+
+## Testing
+
+The implementation includes comprehensive tests covering:
+
+- Empty arrays
+- Single-element arrays
+- Two-element arrays
+- Multiple-element arrays
+- Arrays with duplicate elements
+- Arrays with negative numbers
+- Large random arrays (1000 elements)
+- String arrays
+
+## Dependencies
+
+- PHP 7.0 or higher
+- Standard PHP Library
+
+## Performance Considerations
+
+The implementation uses a recursive approach which is clean and easy to understand. For very large datasets, an iterative approach might be more memory-efficient, but for most practical purposes, this implementation provides a good balance of readability and performance.
+
+### Memory Management
+
+The implementation leverages PHP's memory management:
+- Automatic memory management
+- Efficient array operations
+- No manual memory management required
+
+### Type Safety
+
+The implementation uses PHP 7+ type hints:
+- Parameter type declarations
+- Return type declarations
+- Array type hints
+- Strict type checking
+
+### Modern PHP Features
+
+The implementation uses modern PHP features:
+- Type declarations
+- Return type declarations
+- Array destructuring
+- Arrow functions
+- Null coalescing operator
+- Exception handling

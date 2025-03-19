@@ -1,72 +1,105 @@
-# Binary Search in C#
+# Merge Sort Implementation in C#
 
-A binary search implementation in C# with comprehensive testing.
+This directory contains a C# implementation of the merge sort algorithm, along with comprehensive tests and documentation.
 
-## Requirements
+## Implementation Details
 
-- .NET 6.0 or higher
-- xUnit for testing
+The merge sort implementation is located in `src/MergeSort.cs`. The algorithm has the following characteristics:
 
-## Project Structure
+- Time Complexity: O(n log n)
+- Space Complexity: O(n)
+- Stable sorting algorithm
+- Recursive implementation
+- Generic type support
 
-```
-csharp/
-├── src/
-│   └── BinarySearch.cs
-├── tests/
-│   └── BinarySearchTests.cs
-└── README.md
-```
+### Key Features
 
-## Building and Running
+- Type-safe implementation with C# generics
+- Comprehensive test coverage using MSTest
+- Command-line interface for file-based sorting
+- Modular design with separate merge function
+- Support for various data types (numbers, strings)
+- Error handling for file operations
+- LINQ integration for efficient data processing
 
-1. Build the project:
+## Usage
+
+### Building the Project
+
 ```bash
 dotnet build
 ```
 
-2. Run the main program:
+### Running the Program
+
 ```bash
-dotnet run --project src
+dotnet run -- <input_file>
 ```
 
-3. Run the tests:
+The sorted output will be written to `sorted_data.txt`.
+
+### Running Tests
+
 ```bash
 dotnet test
 ```
 
-## Implementation Details
+## Testing
 
-- Comprehensive XML documentation
-- Proper exception handling
-- Null checks
-- Type-safe implementation
+The implementation includes comprehensive tests covering:
+
+- Empty arrays
+- Single-element arrays
+- Two-element arrays
+- Multiple-element arrays
+- Arrays with duplicate elements
+- Arrays with negative numbers
+- Large random arrays (1000 elements)
+- String arrays
+- Null array handling
+
+## Dependencies
+
+- .NET 6.0 or higher
+- MSTest for testing
+- Standard library only (no external dependencies)
+
+## Performance Considerations
+
+The implementation uses a recursive approach which is clean and easy to understand. For very large datasets, an iterative approach might be more memory-efficient, but for most practical purposes, this implementation provides a good balance of readability and performance.
+
+### Memory Management
+
+The implementation leverages C#'s memory management:
+- Automatic memory management
 - Efficient array operations
+- No manual memory management required
+- LINQ optimizations
 
-## Features
+### Type Safety
 
-- Handles empty arrays
-- Handles single element arrays
-- Handles negative numbers
-- Handles duplicate elements (returns first occurrence)
-- Throws ArgumentNullException for null input
-- Efficient memory usage
-- Type-safe implementation
+The implementation uses C#'s type system:
+- Generic type support
+- Interface constraints
+- Type inference
+- Null safety
 
-## Complexity
+### Modern C# Features
 
-- Time Complexity: O(log n)
-- Space Complexity: O(1)
+The implementation uses modern C# features:
+- Generics
+- LINQ
+- Null-conditional operators
+- String interpolation
+- Exception handling
+- File handling
+- Command-line argument handling
 
-## Test Cases
+### Error Handling
 
-The implementation includes test cases for:
-- Target value present in the middle of the array
-- Target value at the start of the array
-- Target value at the end of the array
-- Target value not present in the array
-- Empty array
-- Single element array
-- Array with negative numbers
-- Array with duplicate elements
-- Null input handling with exception
+The implementation includes comprehensive error handling for:
+- File operations (reading, writing)
+- Invalid input parameters
+- Command-line argument validation
+- Data parsing errors
+- Null reference handling

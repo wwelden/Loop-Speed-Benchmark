@@ -1,67 +1,63 @@
-# Binary Search in TypeScript
+# Merge Sort Implementation in TypeScript
 
-This directory contains a TypeScript implementation of the binary search algorithm.
+This directory contains a TypeScript implementation of the merge sort algorithm, along with comprehensive tests and documentation.
 
-## Requirements
-- Node.js 14 or higher
-- npm (Node Package Manager)
-- TypeScript 4.0 or higher
+## Implementation Details
 
-## Installation
-```bash
-npm install
-npm install --save-dev @types/jest
-```
+The merge sort implementation is located in `src/merge_sort.ts`. The algorithm has the following characteristics:
 
-## Running the Code
+- Time Complexity: O(n log n)
+- Space Complexity: O(n)
+- Stable sorting algorithm
+- Recursive implementation
 
-### Compiling TypeScript
-```bash
-npm run build
-```
+### Key Features
 
-### Running the main implementation
-```bash
-npm start
-```
+- Type-safe implementation using TypeScript
+- Comprehensive test coverage
+- Command-line interface for file-based sorting
+- Modular design with separate merge function
 
-### Running the tests
+## Usage
+
+### Running Tests
+
 ```bash
 npm test
 ```
 
-## Implementation Details
-The implementation includes:
-- Full TypeScript type safety
-- Comprehensive JSDoc documentation
-- Type checking with TypeScript annotations
-- Example usage in documentation
-- Proper error handling (returns -1 for not found)
-- Null/undefined checking with type assertions
+### Sorting a File
 
-## Features
-- Handles empty arrays
-- Handles single element arrays
-- Handles negative numbers
-- Handles duplicate elements (returns first occurrence)
-- Handles null/undefined input with type safety
-- Efficient memory usage
-- Type-safe array operations
+```bash
+npm start -- <input_file>
+```
 
-## Time Complexity
-O(log n)
+The sorted output will be written to `sorted_data.txt`.
 
-## Space Complexity
-O(1)
+## Testing
 
-## Test Cases
-The implementation includes test cases for:
-- Target value present in the middle of the array
-- Target value at the start of the array
-- Target value at the end of the array
-- Target value not present in the array
-- Empty array
-- Single element array
-- Array with negative numbers
-- Array with duplicate elements
-- Null/undefined input handling with type safety
+The implementation includes comprehensive tests covering:
+
+- Empty arrays
+- Single-element arrays
+- Two-element arrays
+- Multiple-element arrays
+- Arrays with duplicate elements
+- Arrays with negative numbers
+- Large random arrays (1000 elements)
+
+## Dependencies
+
+- TypeScript
+- Jest (for testing)
+- ts-node (for running TypeScript directly)
+
+## Installation
+
+```bash
+npm install
+```
+
+## Performance Considerations
+
+The implementation uses a recursive approach which is clean and easy to understand. For very large datasets, an iterative approach might be more memory-efficient, but for most practical purposes, this implementation provides a good balance of readability and performance.
