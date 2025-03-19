@@ -1,0 +1,7 @@
+Generating test data...
+Running benchmarks...
+
+Results (sorted by execution time):
+----------------------------------------
+Language       	Time (seconds)
+----------------------------------------
