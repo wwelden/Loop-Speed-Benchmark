@@ -59,7 +59,8 @@ for test in \
     "Go:go run go/src/binary_search.go test_data.txt:go" \
     "Kotlin:kotlinc kotlin/src/binary_search.kt -include-runtime -d kotlin/binary_search.jar && java -jar kotlin/binary_search.jar test_data.txt:kotlinc" \
     "Perl:perl perl/src/binary_search.pl test_data.txt:perl" \
-    "Assembly:nasm -f macho64 asm/src/binary_search.asm && ld -o asm/binary_search asm/src/binary_search.o && ./asm/binary_search test_data.txt:nasm"
+    "Assembly:nasm -f macho64 asm/src/binary_search.asm && ld -o asm/binary_search asm/src/binary_search.o && ./asm/binary_search test_data.txt:nasm" \
+    "R:Rscript r/src/binary_search.R test_data.txt:Rscript"
 do
     IFS=: read -r lang cmd compiler <<< "$test"
     output=$(run_test "$lang" "$cmd" "$compiler")
