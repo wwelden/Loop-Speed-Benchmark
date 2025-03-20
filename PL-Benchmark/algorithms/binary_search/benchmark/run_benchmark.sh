@@ -88,11 +88,9 @@ benchmark_assembly() {
 # Function to build and benchmark C implementation
 benchmark_c() {
     if [ -d "$IMPLEMENTATIONS_DIR/c/src" ]; then
-        # Build
         mkdir -p "$BUILD_DIR/c"
         gcc -O2 "$IMPLEMENTATIONS_DIR/c/src/binary_search.c" -o "$BUILD_DIR/c/binary_search"
 
-        # Run benchmark
         if [ -f "$BUILD_DIR/c/binary_search" ]; then
             run_benchmark "c" "$BUILD_DIR/c/binary_search $INPUT_FILE $TARGETS_FILE"
         else
@@ -180,14 +178,13 @@ benchmark_java() {
 # Function to build and benchmark JavaScript implementation
 benchmark_javascript() {
     if [ -d "$IMPLEMENTATIONS_DIR/javascript/src" ]; then
-        # JavaScript doesn't need to be built
         if [ -f "$IMPLEMENTATIONS_DIR/javascript/src/binary_search.js" ]; then
             run_benchmark "javascript" "node $IMPLEMENTATIONS_DIR/javascript/src/binary_search.js $INPUT_FILE $TARGETS_FILE"
         else
             echo "JavaScript implementation not found."
         fi
     else
-        echo "JavaScript implementation not found."
+        echo "JavaScript implementation directory not found."
     fi
 }
 
@@ -212,14 +209,13 @@ benchmark_typescript() {
 # Function to build and benchmark Python implementation
 benchmark_python() {
     if [ -d "$IMPLEMENTATIONS_DIR/python/src" ]; then
-        # Python doesn't need to be built
         if [ -f "$IMPLEMENTATIONS_DIR/python/src/binary_search.py" ]; then
             run_benchmark "python" "python3 $IMPLEMENTATIONS_DIR/python/src/binary_search.py $INPUT_FILE $TARGETS_FILE"
         else
             echo "Python implementation not found."
         fi
     else
-        echo "Python implementation not found."
+        echo "Python implementation directory not found."
     fi
 }
 
@@ -330,5 +326,5 @@ if [ -n "$VIRTUAL_ENV" ]; then
     deactivate
 fi
 
-echo "Benchmark completed successfully!"
+echo "Binary search benchmark completed successfully!"
 exit 0

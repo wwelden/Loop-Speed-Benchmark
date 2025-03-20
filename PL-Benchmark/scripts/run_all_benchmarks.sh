@@ -45,47 +45,44 @@ fi
 
 # Generate combined results
 echo "Generating combined results..."
-if [ -f "$PROJECT_ROOT/utils/visualize_results.py" ]; then
-    # Create a combined directory for results
+if [ -f "$PROJECT_ROOT/results/merge_sort/summary.csv" ] && [ -f "$PROJECT_ROOT/results/binary_search/summary.csv" ]; then
+    # Create combined directory
     mkdir -p "$PROJECT_ROOT/results/combined"
 
-    # Combine the CSV files
+    # Create combined file with header
     echo "language,algorithm,average_time" > "$PROJECT_ROOT/results/combined/combined_results.csv"
 
     # Add merge sort results
-    if [ -f "$PROJECT_ROOT/results/merge_sort/summary.csv" ]; then
-        tail -n +2 "$PROJECT_ROOT/results/merge_sort/summary.csv" | \
-        awk -F, '{print $1",merge_sort,"$2}' >> "$PROJECT_ROOT/results/combined/combined_results.csv"
-    fi
+    tail -n +2 "$PROJECT_ROOT/results/merge_sort/summary.csv" | \
+    awk -F, '{print $1",merge_sort,"$2}' >> "$PROJECT_ROOT/results/combined/combined_results.csv"
 
     # Add binary search results
-    if [ -f "$PROJECT_ROOT/results/binary_search/summary.csv" ]; then
-        tail -n +2 "$PROJECT_ROOT/results/binary_search/summary.csv" | \
-        awk -F, '{print $1",binary_search,"$2}' >> "$PROJECT_ROOT/results/combined/combined_results.csv"
+    tail -n +2 "$PROJECT_ROOT/results/binary_search/summary.csv" | \
+    awk -F, '{print $1",binary_search,"$2}' >> "$PROJECT_ROOT/results/combined/combined_results.csv"
+
+    echo "Combined results saved to $PROJECT_ROOT/results/combined/combined_results.csv"
+
+    # Generate visualizations if the tool exists
+    if [ -f "$PROJECT_ROOT/utils/visualize_results.py" ]; then
+        echo "Generating visualizations..."
+        python3 "$PROJECT_ROOT/utils/visualize_results.py" --results "$PROJECT_ROOT/results/combined/combined_results.csv" --output "$PROJECT_ROOT/results/combined/visualization.html"
+        echo "Visualization saved to $PROJECT_ROOT/results/combined/visualization.html"
     fi
-
-    # Generate visualization
-    python3 "$PROJECT_ROOT/utils/visualize_results.py" \
-        --results "$PROJECT_ROOT/results/combined/combined_results.csv" \
-        --output "$PROJECT_ROOT/results/combined/combined_visualization.html"
-
-    echo "Combined results saved to: $PROJECT_ROOT/results/combined/combined_results.csv"
-    echo "Combined visualization saved to: $PROJECT_ROOT/results/combined/combined_visualization.html"
 else
-    echo "Warning: Visualization script not found. Skipping combined results."
+    echo "Warning: Could not generate combined results. One or both summary files are missing."
 fi
 
 # Try to open the results in a browser if possible
-if [ -f "$PROJECT_ROOT/results/combined/combined_visualization.html" ]; then
+if [ -f "$PROJECT_ROOT/results/combined/visualization.html" ]; then
     echo "Opening results visualization..."
     if command -v open > /dev/null; then
-        open "$PROJECT_ROOT/results/combined/combined_visualization.html"
+        open "$PROJECT_ROOT/results/combined/visualization.html"
     elif command -v xdg-open > /dev/null; then
-        xdg-open "$PROJECT_ROOT/results/combined/combined_visualization.html"
+        xdg-open "$PROJECT_ROOT/results/combined/visualization.html"
     elif command -v start > /dev/null; then
-        start "$PROJECT_ROOT/results/combined/combined_visualization.html"
+        start "$PROJECT_ROOT/results/combined/visualization.html"
     else
-        echo "Please open the results file manually: $PROJECT_ROOT/results/combined/combined_visualization.html"
+        echo "Please open the results file manually: $PROJECT_ROOT/results/combined/visualization.html"
     fi
 fi
 
