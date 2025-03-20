@@ -1,0 +1,14 @@
+/Users/williamwelden/Developer/SpeedTest/implementations/csharp/bin/Release/net8.0/mergesort
+/Users/williamwelden/Developer/SpeedTest/implementations/csharp/bin/Release/net8.0/mergesort.deps.json
+/Users/williamwelden/Developer/SpeedTest/implementations/csharp/bin/Release/net8.0/mergesort.runtimeconfig.json
+/Users/williamwelden/Developer/SpeedTest/implementations/csharp/bin/Release/net8.0/mergesort.dll
+/Users/williamwelden/Developer/SpeedTest/implementations/csharp/bin/Release/net8.0/mergesort.pdb
+/Users/williamwelden/Developer/SpeedTest/implementations/csharp/obj/Release/net8.0/mergesort.GeneratedMSBuildEditorConfig.editorconfig
+/Users/williamwelden/Developer/SpeedTest/implementations/csharp/obj/Release/net8.0/mergesort.AssemblyInfoInputs.cache
+/Users/williamwelden/Developer/SpeedTest/implementations/csharp/obj/Release/net8.0/mergesort.AssemblyInfo.cs
+/Users/williamwelden/Developer/SpeedTest/implementations/csharp/obj/Release/net8.0/mergesort.csproj.CoreCompileInputs.cache
+/Users/williamwelden/Developer/SpeedTest/implementations/csharp/obj/Release/net8.0/mergesort.dll
+/Users/williamwelden/Developer/SpeedTest/implementations/csharp/obj/Release/net8.0/refint/mergesort.dll
+/Users/williamwelden/Developer/SpeedTest/implementations/csharp/obj/Release/net8.0/mergesort.pdb
+/Users/williamwelden/Developer/SpeedTest/implementations/csharp/obj/Release/net8.0/mergesort.genruntimeconfig.cache
+/Users/williamwelden/Developer/SpeedTest/implementations/csharp/obj/Release/net8.0/ref/mergesort.dll

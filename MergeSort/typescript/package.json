@@ -1,0 +1,14 @@
+{
+  "name": "merge-sort-typescript",
+  "version": "1.0.0",
+  "description": "Merge sort implementation in TypeScript",
+  "main": "dist/merge_sort.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/merge_sort.js"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.24",
+    "typescript": "^5.3.3"
+  }
+}

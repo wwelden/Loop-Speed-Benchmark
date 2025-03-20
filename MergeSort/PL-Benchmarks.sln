@@ -1,0 +1,32 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.2.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SpeedTest", "SpeedTest", "{1053E435-8F3A-29DD-208E-8868E38DC1B2}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "implementations", "implementations", "{FD4ED07D-C760-F4D3-7727-92E8A1878408}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "mergesort", "SpeedTest\implementations\csharp\mergesort.csproj", "{7171C4C1-735E-C313-9335-192486ED8FD3}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{7171C4C1-735E-C313-9335-192486ED8FD3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7171C4C1-735E-C313-9335-192486ED8FD3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7171C4C1-735E-C313-9335-192486ED8FD3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7171C4C1-735E-C313-9335-192486ED8FD3}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{FD4ED07D-C760-F4D3-7727-92E8A1878408} = {1053E435-8F3A-29DD-208E-8868E38DC1B2}
+		{7171C4C1-735E-C313-9335-192486ED8FD3} = {FD4ED07D-C760-F4D3-7727-92E8A1878408}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {75E29438-A13B-46F6-987D-FB5FC197DF49}
+	EndGlobalSection
+EndGlobal
