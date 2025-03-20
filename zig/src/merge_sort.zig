@@ -31,42 +31,55 @@ pub fn mergeSort(allocator: std.mem.Allocator, arr: []i32) !void {
 /// @param right Second sorted array
 /// @return void (merges in place)
 fn merge(allocator: std.mem.Allocator, arr: []i32, left: []i32, right: []i32) !void {
-    // Create temporary array for merging
-    var temp = try allocator.alloc(i32, arr.len);
-    defer allocator.free(temp);
+    const left_size = left.len;
+    const right_size = right.len;
 
+    // Create temporary arrays
+    var temp_left: []i32 = undefined;
+    var temp_right: []i32 = undefined;
+
+    // Copy data to temporary arrays
+    temp_left = try allocator.alloc(i32, left_size);
+    temp_right = try allocator.alloc(i32, right_size);
+    defer allocator.free(temp_left);
+    defer allocator.free(temp_right);
+
+    for (0..left_size) |i| {
+        temp_left[i] = left[i];
+    }
+    for (0..right_size) |i| {
+        temp_right[i] = right[i];
+    }
+
+    // Merge temporary arrays back into arr
     var i: usize = 0;
     var j: usize = 0;
     var k: usize = 0;
 
-    // Compare elements from both arrays and merge them
-    while (i < left.len and j < right.len) {
-        if (left[i] <= right[j]) {
-            temp[k] = left[i];
+    while (i < left_size and j < right_size) {
+        if (temp_left[i] <= temp_right[j]) {
+            arr[k] = temp_left[i];
             i += 1;
         } else {
-            temp[k] = right[j];
+            arr[k] = temp_right[j];
             j += 1;
         }
         k += 1;
     }
 
-    // Copy remaining elements from left array
-    while (i < left.len) {
-        temp[k] = left[i];
+    // Copy remaining elements of temp_left if any
+    while (i < left_size) {
+        arr[k] = temp_left[i];
         i += 1;
         k += 1;
     }
 
-    // Copy remaining elements from right array
-    while (j < right.len) {
-        temp[k] = right[j];
+    // Copy remaining elements of temp_right if any
+    while (j < right_size) {
+        arr[k] = temp_right[j];
         j += 1;
         k += 1;
     }
-
-    // Copy merged array back to original array
-    std.mem.copy(i32, arr, temp);
 }
 
 pub fn main() !void {

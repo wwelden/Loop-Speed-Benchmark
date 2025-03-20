@@ -1,71 +1,161 @@
-; Implementation of merge sort algorithm in x86_64 Assembly
+; Implementation of merge sort algorithm in x86_64 Assembly for macOS
 ; Time complexity: O(n log n)
 ; Space complexity: O(n)
 ; Author: Assistant
 ; Date: 2024
 
 section .data
-    ; Test data
-    test_array dd 5, 3, 8, 4, 2, 1, 9, 7, 6, 0
-    test_size  dd 10
-    test_msg   db "Testing merge sort...", 10
-    test_len   equ $ - test_msg
-    pass_msg   db "Test passed!", 10
-    pass_len   equ $ - pass_msg
-    fail_msg   db "Test failed!", 10
-    fail_len   equ $ - fail_msg
+    error_msg db "Error: Please provide an input file path", 10
+    error_len equ $ - error_msg
+    output_file db "sorted_data.txt", 0
+    newline db 10
+    digit_buffer resb 32    ; Buffer for number conversion
+    digit_buffer_len equ $ - digit_buffer
 
 section .bss
-    ; Temporary array for merging
-    temp_array resd 1000
-    temp_size  resd 1
+    buffer resb 1024
+    numbers resq 100000
+    temp_array resq 100000
+    num_count resq 1
+    file_handle resq 1
+    current_number resq 1
+    digit_count resq 1
 
 section .text
-    global _start
+    global _main
+    extern _printf
+    extern _fopen
+    extern _fclose
+    extern _fgets
+    extern _fputs
+    extern _fprintf
+    extern _exit
 
-_start:
-    ; Print test message
-    mov rax, 1          ; sys_write
-    mov rdi, 1          ; stdout
-    mov rsi, test_msg
-    mov rdx, test_len
-    syscall
+_main:
+    push rbp
+    mov rbp, rsp
+    sub rsp, 16     ; Local variables
 
-    ; Test merge sort
-    mov rdi, test_array
-    mov esi, [test_size]
+    ; Check command line arguments
+    mov rdi, [rbp + 16]  ; argc
+    cmp rdi, 2
+    jne print_error
+
+    mov rdi, [rbp + 24]  ; argv
+    mov rdi, [rdi + 8]   ; argv[1] (input file path)
+
+    ; Open input file
+    lea rsi, [rel read_mode]
+    call _fopen
+    test rax, rax
+    jz print_error
+    mov [rel file_handle], rax
+
+    ; Read numbers from file
+    xor r8, r8      ; Counter for numbers
+read_loop:
+    lea rdi, [rel buffer]
+    mov rsi, 1024
+    mov rdx, [rel file_handle]
+    call _fgets
+    test rax, rax
+    jz read_done
+
+    ; Process buffer
+    lea rsi, [rel buffer]
+    xor r9, r9      ; Current number
+    xor r10, r10    ; Digit count
+process_buffer:
+    movzx eax, byte [rsi]
+    test al, al
+    jz read_loop
+    cmp al, 10      ; Newline
+    je convert_number
+    cmp al, '0'
+    jb read_loop
+    cmp al, '9'
+    ja read_loop
+
+    ; Convert digit to number
+    sub al, '0'
+    movzx eax, al
+    imul r9, 10
+    add r9, rax
+    inc r10
+    inc rsi
+    jmp process_buffer
+
+convert_number:
+    ; Store the number
+    mov [rel numbers + r8*8], r9
+    inc r8
+    jmp read_loop
+
+read_done:
+    ; Close input file
+    mov rdi, [rel file_handle]
+    call _fclose
+
+    ; Store number count
+    mov [rel num_count], r8
+
+    ; Call merge sort
+    lea rdi, [rel numbers]
+    mov rsi, [rel num_count]
     call merge_sort
 
-    ; Verify sorting
-    call verify_sort
-    test al, al
-    jz .test_failed
+    ; Open output file
+    lea rdi, [rel output_file]
+    lea rsi, [rel write_mode]
+    call _fopen
+    test rax, rax
+    jz print_error
+    mov [rel file_handle], rax
 
-    ; Print success message
-    mov rax, 1
-    mov rdi, 1
-    mov rsi, pass_msg
-    mov rdx, pass_len
-    syscall
-    jmp .exit
+    ; Write numbers
+    xor r8, r8      ; Counter
+write_loop:
+    cmp r8, [rel num_count]
+    jge write_done
 
-.test_failed:
-    ; Print failure message
-    mov rax, 1
-    mov rdi, 1
-    mov rsi, fail_msg
-    mov rdx, fail_len
-    syscall
+    ; Convert number to string
+    mov rdi, [rel numbers + r8*8]
+    call number_to_string
 
-.exit:
-    ; Exit program
-    mov rax, 60         ; sys_exit
-    xor rdi, rdi        ; status 0
-    syscall
+    ; Write number
+    lea rdi, [rel digit_buffer]
+    mov rsi, [rel file_handle]
+    call _fputs
+
+    ; Write newline
+    lea rdi, [rel newline]
+    mov rsi, [rel file_handle]
+    call _fputs
+
+    inc r8
+    jmp write_loop
+
+write_done:
+    ; Close output file
+    mov rdi, [rel file_handle]
+    call _fclose
+
+    ; Exit
+    xor rdi, rdi    ; status 0
+    call _exit
+
+print_error:
+    lea rdi, [rel error_msg]
+    call _printf
+    mov rdi, 1      ; status 1
+    call _exit
+
+; Data for file modes
+read_mode db "r", 0
+write_mode db "w", 0
 
 ; merge_sort: Sorts an array using merge sort algorithm
 ; Input: rdi = array pointer, rsi = array size
-; Output: sorted array in place
 merge_sort:
     push rbp
     mov rbp, rsp
@@ -98,7 +188,7 @@ merge_sort:
 
     ; Recursively sort right half
     pop r15             ; restore right size
-    lea rdi, [r12 + r14*4]  ; right array pointer
+    lea rdi, [r12 + r14*8]  ; right array pointer
     mov esi, r15d       ; right size
     call merge_sort
 
@@ -119,7 +209,6 @@ merge_sort:
 
 ; merge: Merges two sorted arrays into a single sorted array
 ; Input: rdi = array pointer, rsi = left size, rdx = right size
-; Output: merged array in place
 merge:
     push rbp
     mov rbp, rsp
@@ -140,14 +229,14 @@ merge:
     xor rcx, rcx        ; k = 0 (temp index)
 
     ; Copy array to temp array
-    mov rdi, temp_array
+    mov rdi, [rel temp_array]
     mov rsi, r12
     mov edx, r13d
     add edx, r14d
     call copy_array
 
     ; Reset array pointer
-    mov r12, temp_array
+    mov r12, [rel temp_array]
 
 .merge_loop:
     ; Compare elements from both arrays
@@ -157,49 +246,48 @@ merge:
     jge .copy_left
 
     ; Compare elements
-    mov eax, [r12 + rbx*4]      ; left[i]
-    cmp eax, [r12 + r13*4 + r15*4]  ; compare with right[j]
-    jle .copy_left_elem
+    mov rax, [r12 + rbx*8]      ; left[i]
+    mov rdx, [r12 + r13*8 + r15*8]  ; right[j]
+    cmp rax, rdx
+    jle .copy_left_element
+    jmp .copy_right_element
 
-.copy_right_elem:
-    mov eax, [r12 + r13*4 + r15*4]
-    mov [r12 + rcx*4], eax
-    inc r15d
-    jmp .continue_merge
+.copy_left_element:
+    mov [r12 + rcx*8], rax
+    inc rbx
+    inc rcx
+    jmp .merge_loop
 
-.copy_left_elem:
-    mov eax, [r12 + rbx*4]
-    mov [r12 + rcx*4], eax
-    inc ebx
-
-.continue_merge:
-    inc ecx
+.copy_right_element:
+    mov [r12 + rcx*8], rdx
+    inc r15
+    inc rcx
     jmp .merge_loop
 
 .copy_left:
-    ; Copy remaining elements from left array
+    ; Copy remaining left elements
     cmp ebx, r13d
     jge .merge_done
-    mov eax, [r12 + rbx*4]
-    mov [r12 + rcx*4], eax
-    inc ebx
-    inc ecx
+    mov rax, [r12 + rbx*8]
+    mov [r12 + rcx*8], rax
+    inc rbx
+    inc rcx
     jmp .copy_left
 
 .copy_right:
-    ; Copy remaining elements from right array
+    ; Copy remaining right elements
     cmp r15d, r14d
     jge .merge_done
-    mov eax, [r12 + r13*4 + r15*4]
-    mov [r12 + rcx*4], eax
-    inc r15d
-    inc ecx
+    mov rax, [r12 + r13*8 + r15*8]
+    mov [r12 + rcx*8], rax
+    inc r15
+    inc rcx
     jmp .copy_right
 
 .merge_done:
     ; Copy back to original array
     mov rdi, [rbp + 16]  ; original array pointer
-    mov rsi, temp_array
+    mov rsi, [rel temp_array]
     mov edx, r13d
     add edx, r14d
     call copy_array
@@ -212,9 +300,8 @@ merge:
     pop rbp
     ret
 
-; copy_array: Copies elements from source array to destination array
-; Input: rdi = dest pointer, rsi = src pointer, rdx = size
-; Output: copied array
+; copy_array: Copies elements from source to destination
+; Input: rdi = destination, rsi = source, rdx = size
 copy_array:
     push rbp
     mov rbp, rsp
@@ -222,16 +309,16 @@ copy_array:
     push r12
     push r13
 
-    mov r12, rdi        ; dest pointer
-    mov r13, rsi        ; src pointer
-    xor rbx, rbx        ; i = 0
+    mov r12, rdi        ; destination
+    mov r13, rsi        ; source
+    xor rbx, rbx        ; counter
 
 .copy_loop:
     cmp ebx, edx
     jge .copy_done
-    mov eax, [r13 + rbx*4]
-    mov [r12 + rbx*4], eax
-    inc ebx
+    mov rax, [r13 + rbx*8]
+    mov [r12 + rbx*8], rax
+    inc rbx
     jmp .copy_loop
 
 .copy_done:
@@ -241,34 +328,58 @@ copy_array:
     pop rbp
     ret
 
-; verify_sort: Verifies if an array is sorted
-; Input: rdi = array pointer, rsi = array size
-; Output: al = 1 if sorted, 0 if not
-verify_sort:
+; number_to_string: Converts a number to a string
+; Input: rdi = number
+number_to_string:
     push rbp
     mov rbp, rsp
     push rbx
     push r12
     push r13
 
-    mov r12, rdi        ; array pointer
-    mov r13d, esi       ; array size
-    xor rbx, rbx        ; i = 0
+    mov r12, rdi        ; number
+    lea r13, [rel digit_buffer]
+    xor rbx, rbx        ; digit count
 
-.verify_loop:
-    inc ebx
-    cmp ebx, r13d
-    jge .verify_done
-    mov eax, [r12 + rbx*4 - 4]  ; arr[i-1]
-    cmp eax, [r12 + rbx*4]      ; compare with arr[i]
-    jle .verify_loop
-    xor al, al          ; return 0 (not sorted)
-    jmp .verify_exit
+    ; Handle zero case
+    test r12, r12
+    jnz .convert_loop
+    mov byte [r13], '0'
+    mov byte [r13 + 1], 10
+    jmp .number_done
 
-.verify_done:
-    mov al, 1           ; return 1 (sorted)
+.convert_loop:
+    test r12, r12
+    jz .reverse_digits
+    mov rax, r12
+    xor rdx, rdx
+    mov rcx, 10
+    div rcx
+    mov r12, rax
+    add dl, '0'
+    mov [r13 + rbx], dl
+    inc rbx
+    jmp .convert_loop
 
-.verify_exit:
+.reverse_digits:
+    ; Reverse the digits
+    lea r12, [r13 + rbx - 1]  ; end pointer
+    lea r13, [rel digit_buffer]  ; start pointer
+.reverse_loop:
+    cmp r13, r12
+    jge .number_done
+    mov al, [r13]
+    mov cl, [r12]
+    mov [r13], cl
+    mov [r12], al
+    inc r13
+    dec r12
+    jmp .reverse_loop
+
+.number_done:
+    mov byte [r13 + rbx], 10  ; newline
+    mov byte [r13 + rbx + 1], 0  ; null terminator
+
     pop r13
     pop r12
     pop rbx

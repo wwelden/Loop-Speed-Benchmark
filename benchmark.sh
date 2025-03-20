@@ -26,7 +26,7 @@ run_benchmark() {
     local cmd=$2
     local compile_cmd=$3
     local input_file="benchmark_input.txt"
-    local size=10000  # Size of each array
+    local size=100000  # Size of each array
 
     echo -e "${YELLOW}Benchmarking $lang implementation...${NC}"
 
@@ -64,7 +64,7 @@ run_benchmark() {
 
     # Extract real execution time
     local total_time=$(grep real time_output.txt | awk '{print $2}')
-    local avg_time=$(echo "scale=6; $total_time/100" | bc)
+    local avg_time=$(echo "scale=6; $total_time/1000" | bc)
 
     # Print results
     echo -e "${GREEN}$lang:${NC}"
@@ -76,12 +76,9 @@ run_benchmark() {
     rm -f time_output.txt
 }
 
-# Create benchmark directory if it doesn't exist
-mkdir -p benchmark_results
-
 # Check for required compilers and interpreters
 echo "Checking dependencies..."
-for cmd in javac java python3 node npm go gcc g++ php perl lua cargo swiftc cobc; do
+for cmd in javac java python3 node npm go gcc g++ php perl lua cargo swiftc; do
     if ! command_exists "$cmd"; then
         echo -e "${RED}Warning: $cmd is not installed${NC}"
     fi
@@ -104,12 +101,12 @@ fi
 run_benchmark "JavaScript" "node js/src/merge_sort.js benchmark_input.txt"
 
 # TypeScript setup
-if [ ! -d "typescript/node_modules" ]; then
-    echo "Setting up TypeScript dependencies..."
-    cd typescript && npm init -y && npm install typescript ts-node @types/node && cd ..
-fi
-# run_benchmark "TypeScript" "ts-node typescript/src/merge_sort.ts benchmark_input.txt" \
-#     "cd typescript && npx tsc src/merge_sort.ts && cd .."
+# if [ ! -d "typescript/node_modules" ]; then
+#     echo "Setting up TypeScript dependencies..."
+#     cd typescript && npm install && cd ..
+# fi
+# run_benchmark "TypeScript" "node typescript/dist/merge_sort.js benchmark_input.txt" \
+#     "cd typescript && npm run build && cd .."
 
 run_benchmark "Go" "go run go/src/merge_sort.go benchmark_input.txt"
 
@@ -136,6 +133,30 @@ run_benchmark "Rust" "./rust/target/release/merge_sort benchmark_input.txt" \
 # Swift setup
 run_benchmark "Swift" "./swift/src/merge_sort benchmark_input.txt" \
     "swiftc -O swift/src/merge_sort.swift -o swift/src/merge_sort"
+
+# Assembly setup
+run_benchmark "Assembly" "./asm/src/merge_sort benchmark_input.txt" \
+    "nasm -f macho64 asm/src/merge_sort.asm -o asm/src/merge_sort.o && ld -o asm/src/merge_sort asm/src/merge_sort.o"
+
+# Bash setup
+run_benchmark "Bash" "bash bash/src/merge_sort.sh benchmark_input.txt"
+
+# C# setup
+mkdir -p csharp/src/merge_sort haskell/src kotlin/src zig/src
+run_benchmark "C#" "dotnet csharp/src/merge_sort/bin/Release/net8.0/merge_sort.dll benchmark_input.txt" \
+    "cd csharp/src/merge_sort && dotnet build -c Release && cd ../../.."
+
+# Haskell setup
+run_benchmark "Haskell" "./haskell/src/MergeSort benchmark_input.txt" \
+    "ghc -O2 haskell/src/MergeSort.hs -o haskell/src/MergeSort"
+
+# Kotlin setup
+run_benchmark "Kotlin" "java -jar kotlin/src/merge_sort.jar benchmark_input.txt" \
+    "kotlinc kotlin/src/merge_sort.kt -include-runtime -d kotlin/src/merge_sort.jar"
+
+# Zig setup
+run_benchmark "Zig" "./zig/src/merge_sort benchmark_input.txt" \
+    "zig build-exe zig/src/merge_sort.zig -femit-bin=zig/src/merge_sort -O ReleaseFast"
 
 # Clean up
 rm -f benchmark_input.txt
