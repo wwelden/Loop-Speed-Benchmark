@@ -1,0 +1,2 @@
+/Users/williamwelden/Developer/LoopSpeed2/csharp/bin/Loop.pdb
+/Users/williamwelden/Developer/LoopSpeed2/csharp/bin/Loop
