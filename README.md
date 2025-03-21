@@ -2,6 +2,9 @@
 
 A comprehensive benchmarking project that compares the performance of various programming languages when executing computationally intensive loops. This project helps developers understand the performance characteristics of different programming languages in a controlled environment.
 
+![performance_comparison](https://github.com/user-attachments/assets/8651199a-1f6d-4267-865b-077c02e2a5fa)
+![detailed_performance](https://github.com/user-attachments/assets/c50c4a3a-ad8c-49ac-8afe-53e35cea45e2)
+
 ## Project Overview
 
 This project implements a standardized loop-based computation in multiple programming languages to compare their performance. The core algorithm performs nested loops with array operations, which is a common pattern in many real-world applications.
