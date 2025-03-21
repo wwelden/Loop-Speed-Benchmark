@@ -33,14 +33,14 @@ The project includes implementations in the following languages:
 - Bash
 - C
 - C++
-- C#
+- C# (JIT)
 - Go (standard and optimized)
 - Haskell
 - Java
 - JavaScript
 - Kotlin
-- Lua
-- Perl
+- Lua (JIT and AOT)
+- Perl (JIT and AOT)
 - PHP
 - Python
 - R
@@ -125,6 +125,24 @@ The visualization script provides:
   - Compiler versions
   - System load
 - Some languages may require specific compiler flags or runtime environments
+
+## JIT Compilation
+
+Some implementations in this project utilize Just-In-Time (JIT) compilation to improve performance:
+
+- **LuaJIT**: An optimized version of Lua that uses JIT compilation
+- **Perl JIT**: Perl implementation using the JIT compiler (via `-MO=JIT` flag)
+- **JavaScript**: Modern JavaScript engines (V8, SpiderMonkey) use JIT compilation
+- **Java**: Uses the HotSpot JVM with adaptive JIT compilation
+- **C#**: Uses the .NET runtime with JIT compilation
+
+JIT compilation can significantly improve performance by:
+- Compiling frequently executed code paths to native machine code
+- Optimizing code based on runtime behavior
+- Reducing interpretation overhead
+- Enabling dynamic optimization based on actual usage patterns
+
+Note that JIT compilation may introduce warm-up overhead, where the first few runs might be slower as the JIT compiler analyzes and optimizes the code.
 
 ## Contributing
 
