@@ -57,6 +57,35 @@ To run the benchmarks, you'll need:
 - A Unix-like environment (Linux, macOS, etc.)
 - Various language compilers and interpreters installed
 - Python 3.x (for visualization)
+- Virtual environment (recommended for Python dependencies)
+
+## Quick Start Example
+
+Here's exactly what you need to run to get the visualization working:
+
+```bash
+# 1. Create and activate virtual environment
+python3 -m venv venv
+source venv/bin/activate  # On macOS/Linux
+# or
+.\venv\Scripts\activate  # On Windows
+
+# 2. Install required packages
+pip install matplotlib numpy
+
+# 3. Run the visualization (using default input value of 7)
+python visualize_performance.py
+
+# 4. For scaling analysis with specific input values
+python visualize_performance.py --scaling 3 5 7 9 11
+
+# 5. When done, deactivate the virtual environment
+deactivate
+```
+
+The script will generate two visualization files:
+- `performance_comparison.png`: Basic performance comparison
+- `detailed_performance.png`: Detailed categorization of results
 
 ## Running the Benchmarks
 
@@ -77,8 +106,18 @@ To run the benchmarks, you'll need:
 
 To generate performance visualizations:
 
-1. Install Python dependencies:
+1. Set up and activate the Python virtual environment:
    ```bash
+   # Create virtual environment
+   python3 -m venv venv
+
+   # Activate virtual environment
+   # On macOS/Linux:
+   source venv/bin/activate
+   # On Windows:
+   .\venv\Scripts\activate
+
+   # Install required packages
    pip install matplotlib numpy
    ```
 
@@ -90,6 +129,11 @@ To generate performance visualizations:
 3. For scaling analysis:
    ```bash
    python visualize_performance.py --scaling [input_values...]
+   ```
+
+4. When done, you can deactivate the virtual environment:
+   ```bash
+   deactivate
    ```
 
 ## Output
