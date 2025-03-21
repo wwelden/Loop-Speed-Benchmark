@@ -51,6 +51,12 @@ if [ -f "go/loop.go" ]; then
     (cd go && CGO_ENABLED=0 GOGC=off go build -ldflags="-s -w" loop.go)
 fi
 
+# GoOptimized
+if [ -f "goOptimized/loop.go" ]; then
+    echo "Compiling GoOptimized..."
+    (cd goOptimized && CGO_ENABLED=0 GOGC=off go build -ldflags="-s -w" loop.go)
+fi
+
 # Rust
 if [ -f "rust/Cargo.toml" ]; then
     echo "Compiling Rust..."
@@ -87,7 +93,8 @@ fi
 # Assembly
 compile_if_exists "Assembly" "asm/loop.asm" "clang -nostartfiles -o asm/loop asm/loop.asm -e _start"
 
-
+# AssemblyOptimized
+# compile_if_exists "AssemblyOptimized" "asmOptimized/loop.asm" "clang -nostartfiles -o asmOptimized/loop asmOptimized/loop.asm -e _start"
 
 print_header "Running performance tests..."
 
@@ -105,10 +112,12 @@ run_test() {
 
 # Run tests for compiled languages
 run_test "Assembly" "./asm/loop" "asm/loop"
+# run_test "AssemblyOptimized" "./asmOptimized/loop" "asmOptimized/loop"
 run_test "C" "./c/loop" "c/loop"
 run_test "Zig" "./zig/loop" "zig/loop"
 run_test "Rust" "./rust/target/release/loop_speed" "rust/target/release/loop_speed"
 run_test "Go" "./go/loop" "go/loop"
+run_test "GoOptimized" "./goOptimized/loop" "goOptimized/loop"
 run_test "C++" "./cpp/loop" "cpp/loop"
 run_test "C#" "./csharp/bin/Loop" "csharp/bin/Loop"
 run_test "Java" "java -cp java Loop" "java/Loop.class"
@@ -120,10 +129,14 @@ run_test "TypeScript" "node ts/loop.js" "ts/loop.js"
 run_test "Haskell" "runhaskell haskell/Loop.hs" "haskell/Loop.hs"
 run_test "JavaScript" "node js/loop.js" "js/loop.js"
 run_test "Lua" "lua lua/loop.lua" "lua/loop.lua"
+run_test "LuaJIT" "luajit lua/loop.lua" "lua/loop.lua"
 run_test "PHP" "php php/loop.php" "php/loop.php"
 run_test "Python" "python3 python/loop.py" "python/loop.py"
 run_test "Perl" "perl perl/loop.pl" "perl/loop.pl"
+run_test "Perl JIT" "perl -MO=JIT perl/loop_jit.pl" "perl/loop_jit.pl"
 run_test "R" "Rscript r/loop.r" "r/loop.r"
-run_test "Bash" "bash bash/loop.sh" "bash/loop.sh"
+run_test "Ruby" "ruby ruby/loop.rb" "ruby/loop.rb"
+run_test "BashOptimized" "bash bashOptimized/loop.sh" "bashOptimized/loop.sh"
+# run_test "Bash" "bash bash/loop.sh" "bash/loop.sh"
 
 print_header "Tests completed"

@@ -1,4 +1,4 @@
-#!/usr/bin/env lua
+#!/usr/bin/env luajit
 
 if #arg < 1 then
     io.stderr:write("Please provide a number as command line argument\n")
