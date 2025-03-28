@@ -33,7 +33,8 @@ return a[r]  # Return single element from array
 
 The project includes implementations in the following languages:
 - Assembly (asm)
-- Bash
+- Bash (disabled)
+- Bash (with C)
 - C
 - C++
 - C# (JIT)
