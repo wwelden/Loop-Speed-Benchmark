@@ -191,6 +191,40 @@ JIT compilation can significantly improve performance by:
 
 Note that JIT compilation may introduce warm-up overhead, where the first few runs might be slower as the JIT compiler analyzes and optimizes the code.
 
+## Optimization Techniques
+
+This project showcases various optimization techniques in different language implementations. Some notable examples include:
+
+### HaskellOptimized
+- Uses unboxed vectors (`Data.Vector.Unboxed`) for better memory layout
+- Implements strict evaluation with `BangPatterns` language extension
+- Uses more efficient loop constructs
+- Compiled with `-O2 -funbox-strict-fields -fllvm` flags for maximum performance
+
+### SwiftOptimized
+- Uses `UnsafeMutableBufferPointer` for direct memory access
+- Pre-calculates modulo results to avoid repetitive calculations
+- Implements batch processing with stride for better cache utilization
+- Compiled with `-O -whole-module-optimization` flags
+- Uses memory management techniques like `defer` for proper cleanup
+
+### GoOptimized
+- Uses more efficient data structures
+- Implements loop unrolling for better performance
+- Takes advantage of Go's compiler optimization flags
+
+### BashOptimized
+- Uses built-in operations over external calls
+- Reduces subshell usage
+- Minimizes command substitution overhead
+
+Optimization principles applied across languages:
+1. **Memory optimization**: Efficient data structures and memory layouts
+2. **Algorithm optimization**: Better algorithms and loop patterns
+3. **Compiler optimization**: Using language-specific compiler flags
+4. **Cache optimization**: Improving cache locality and reducing cache misses
+5. **Instruction-level parallelism**: Loop unrolling and vectorization where applicable
+
 ## Contributing
 
 Feel free to contribute by:

@@ -90,6 +90,12 @@ if [ -f "zig/loop.zig" ]; then
     (cd zig && zig build-exe loop.zig -O ReleaseFast)
 fi
 
+# Swift
+if [ -f "swift/loop.swift" ]; then
+    echo "Compiling Swift..."
+    swiftc -O -o swift/loop swift/loop.swift
+fi
+
 # Assembly
 compile_if_exists "Assembly" "asm/loop.asm" "clang -nostartfiles -o asm/loop asm/loop.asm -e _start"
 
@@ -124,6 +130,7 @@ run_test "Java" "java -cp java Loop" "java/Loop.class"
 run_test "Kotlin" "java -jar kotlin/loop.jar" "kotlin/loop.jar"
 run_test "Scala" "scala scala/loop.jar" "scala/loop.jar"
 run_test "TypeScript" "node ts/loop.js" "ts/loop.js"
+run_test "Swift" "./swift/loop" "swift/loop"
 
 # Run tests for interpreted languages
 run_test "Haskell" "runhaskell haskell/Loop.hs" "haskell/Loop.hs"
