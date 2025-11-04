@@ -226,14 +226,3 @@ Optimization principles applied across languages:
 4. **Cache optimization**: Improving cache locality and reducing cache misses
 5. **Instruction-level parallelism**: Loop unrolling and vectorization where applicable
 
-## Contributing
-
-Feel free to contribute by:
-1. Adding implementations in new languages
-2. Optimizing existing implementations
-3. Improving the visualization capabilities
-4. Adding more detailed documentation
-
-## License
-
-This project is open source and available under the MIT License.
