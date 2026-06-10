@@ -1,7 +1,7 @@
 import System.Environment (getArgs)
 import System.Exit (exitFailure)
 import System.IO (hPutStrLn, stderr)
-import System.Random (randomRIO)
+import Data.Time.Clock.POSIX (getPOSIXTime)
 import Data.Array.IO
 import Control.Monad (forM_)
 import Text.Read (readMaybe)
@@ -18,8 +18,9 @@ main = do
                 hPutStrLn stderr "Please provide a valid integer"
                 exitFailure
             Just input -> do                                    -- Get an input number from the command line
-                r <- randomRIO (0, 9999)                       -- Get a random number 0 <= r < 10k
-                arr <- newArray (0, 9999) 0 :: IO (IOArray Int Int)  -- Array of 10k elements initialized to 0
+                now <- getPOSIXTime                            -- Get a random number 0 <= r < 10k
+                let r = floor (now * 1000000) `mod` 10000      -- (clock-derived; avoids the non-bundled random package)
+                arr <- newArray (0, 9999) 0 :: IO (IOUArray Int Int)  -- Array of 10k elements initialized to 0 (unboxed, like every other language's int array)
 
                 forM_ [0..9999] $ \i -> do                     -- 10k outer loop iterations
                     forM_ [0..99999] $ \j -> do                -- 100k inner loop iterations

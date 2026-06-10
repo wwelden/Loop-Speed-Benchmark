@@ -1,69 +1,106 @@
-.section .data, "aw"
-array:      .space 40000                  // Reserve space for an array of 10,000 int32 elements
-random_value: .word 0                     // Placeholder for random value
-input_value:  .word 0                     // Placeholder for input value
+// ARM64 macOS implementation of the loop benchmark.
+// The benchmark loop is hand-written assembly; argument parsing, randomness,
+// and printing call into libc, just like the other implementations.
+//
+// Build: clang asm/loop.asm -o asm/loop
 
-.section .text, "ax"
-.global _start
+.text
+.global _main
+.align 4
 
-_start:
-    // Load input value (hardcoded to 5)
-    MOV W0, #5
-    LDR X1, =input_value
-    STR W0, [X1]                          // Store input value in memory
+_main:
+    sub sp, sp, #96
+    stp x29, x30, [sp, #80]
+    add x29, sp, #80
+    stp x19, x20, [sp, #64]
+    stp x21, x22, [sp, #48]
+    stp x23, x24, [sp, #32]
+    stp x25, x26, [sp, #16]
 
-    // Generate random value (hardcoded to 1234)
-    MOV W1, #1234
-    LDR X2, =random_value
-    STR W1, [X2]                          // Store random value in memory
+    cmp w0, #2                        // if (argc < 2) -> usage error
+    blt usage_error
+    mov x19, x1                       // x19 = argv
 
-    // Initialize loop variables
-    MOV W2, #0                            // Outer loop index
-    MOV W3, #10000                        // Outer loop limit
+    ldr x0, [x19, #8]                 // input = atoi(argv[1])
+    bl _atoi
+    mov w20, w0                       // w20 = input (u)
+    cmp w20, #1                       // atoi returns 0 for junk; reject <= 0
+    blt invalid_error
 
-    LDR X8, =array                        // Load base address of array
+    mov x0, #0                        // r = rand() % 10000, seeded from time
+    bl _time
+    bl _srand
+    bl _rand
+    mov w5, #10000
+    udiv w1, w0, w5
+    msub w21, w1, w5, w0              // w21 = r
 
-outer_loop:
-    CMP W2, W3
-    BGE end_outer_loop
+    adrp x22, array@PAGE              // x22 = array of 10k int32, zeroed (bss)
+    add x22, x22, array@PAGEOFF
 
-    MOV W4, #0                            // Inner loop index
+    mov w23, #0                       // i = 0
+outer_loop:                           // 10k outer loop iterations
+    mov w24, #0                       // j = 0
+    mov w25, #34464                   // w25 = 100000 (0x186A0, built in two steps)
+    movk w25, #1, lsl #16
+inner_loop:                           // 100k inner loop iterations
+    udiv w4, w24, w20
+    msub w4, w4, w20, w24             // w4 = j % input
+    ldr w5, [x22, x23, lsl #2]
+    add w5, w5, w4                    // a[i] = a[i] + j % input
+    str w5, [x22, x23, lsl #2]
+    add w24, w24, #1
+    cmp w24, w25
+    blt inner_loop
 
-    MOVZ W5, #100000 & 0xFFFF             // Load 100000 in two steps
-    MOVK W5, #100000 >> 16, LSL #16
+    ldr w5, [x22, x23, lsl #2]
+    add w5, w5, w21                   // a[i] += r
+    str w5, [x22, x23, lsl #2]
 
-inner_loop:
-    CMP W4, W5
-    BGE end_inner_loop
+    add w23, w23, #1
+    mov w6, #10000
+    cmp w23, w6
+    blt outer_loop
 
-    // Compute a[i] = a[i] + j % u
-    LDR X1, =input_value
-    LDR W6, [X1]                          // Load input value (u)
+    adrp x0, fmt@PAGE                 // printf("%d\n", a[r])
+    add x0, x0, fmt@PAGEOFF
+    ldr w8, [x22, x21, lsl #2]
+    str x8, [sp]                      // variadic args go on the stack (Apple ABI)
+    bl _printf
 
-    UDIV W7, W4, W6                        // W7 = j / u
-    MSUB W8, W7, W6, W4                    // W8 = j % u (modulo operation)
-    ADD W9, W8, W8                         // W9 = a[i] + (j % u)
+    mov w0, #0
+    b epilogue
 
-    STR W9, [X8, W2, SXTW #2]              // Store result in array[i]
+usage_error:
+    adrp x1, usage_msg@PAGE
+    add x1, x1, usage_msg@PAGEOFF
+    mov w2, #49
+    mov w0, #2                        // write(stderr, msg, len)
+    bl _write
+    mov w0, #1
+    b epilogue
 
-    ADD W4, W4, #1                         // j++
-    B inner_loop
+invalid_error:
+    adrp x1, invalid_msg@PAGE
+    add x1, x1, invalid_msg@PAGEOFF
+    mov w2, #40
+    mov w0, #2                        // write(stderr, msg, len)
+    bl _write
+    mov w0, #1
+    b epilogue
 
-end_inner_loop:
-    LDR X2, =random_value
-    LDR W10, [X2]                          // Load random value
+epilogue:
+    ldp x25, x26, [sp, #16]
+    ldp x23, x24, [sp, #32]
+    ldp x21, x22, [sp, #48]
+    ldp x19, x20, [sp, #64]
+    ldp x29, x30, [sp, #80]
+    add sp, sp, #96
+    ret
 
-    LDR W11, [X8, W2, SXTW #2]             // Load a[i]
-    ADD W11, W11, W10                      // a[i] += random value
-    STR W11, [X8, W2, SXTW #2]             // Store updated value in array[i]
+.data
+fmt:         .asciz "%d\n"
+usage_msg:   .ascii "Please provide a number as command line argument\n"
+invalid_msg: .ascii "Please provide a valid non-zero integer\n"
 
-    ADD W2, W2, #1                         // i++
-    B outer_loop
-
-end_outer_loop:
-    MOV W12, #1234                         // Hardcoded index
-    LDR W13, [X8, W12, SXTW #2]            // Load array[random_index]
-
-    MOV X0, #1                             // Exit syscall number
-    MOV X1, #0                             // Exit status
-    SVC #0                                 // Make syscall
+.lcomm array, 40000, 2

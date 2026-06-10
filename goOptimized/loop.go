@@ -7,24 +7,12 @@ import (
 	"runtime"
 	"strconv"
 	"sync"
-	"sync/atomic"
-	"time"
 )
 
-// Pre-calculate modulo sums for better performance
-func calculateModSums(input int) []int64 {
-	modSums := make([]int64, input)
-	for i := 0; i < input; i++ {
-		sum := int64(0)
-		// Use a more efficient modulo calculation
-		for j := 0; j < 100000; j++ {
-			sum += int64(j % input)
-		}
-		modSums[i] = sum
-	}
-	return modSums
-}
-
+// Performs the same work as go/loop.go (10k x 100k modulo additions) with two
+// implementation-level optimizations: the outer loop is split across all CPU
+// cores, and each element's sum accumulates in a local variable instead of
+// repeated array reads/writes. The algorithm itself is unchanged.
 func main() {
 	if len(os.Args) < 2 {
 		fmt.Fprintln(os.Stderr, "Please provide a number as command line argument")
@@ -42,59 +30,32 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Set GOMAXPROCS to use all available CPU cores
-	runtime.GOMAXPROCS(runtime.NumCPU())
+	r := rand.Intn(10000)   // Get a random number 0 <= r < 10k
+	a := make([]int, 10000) // Array of 10k elements initialized to 0
 
-	// Initialize random number generator
-	rand.Seed(time.Now().UnixNano())
-	r := rand.Intn(10000)
-
-	// Pre-calculate modulo sums
-	modSums := calculateModSums(input)
-
-	// Use a more efficient array allocation
-	a := make([]int64, 10000)
-
-	// Use work stealing for better load balancing
-	numWorkers := runtime.NumCPU()
-	chunkSize := 10000 / numWorkers
-	if chunkSize == 0 {
-		chunkSize = 1
-	}
+	workers := runtime.NumCPU()
+	chunk := (10000 + workers - 1) / workers
 
 	var wg sync.WaitGroup
-	wg.Add(numWorkers)
-
-	// Create a work queue
-	type work struct {
-		start, end int
-	}
-	workChan := make(chan work, numWorkers)
-
-	// Start workers
-	for i := 0; i < numWorkers; i++ {
-		go func() {
-			defer wg.Done()
-			for w := range workChan {
-				for j := w.start; j < w.end; j++ {
-					// Use atomic operations for thread safety
-					atomic.AddInt64(&a[j], modSums[j%input]+int64(r))
-				}
-			}
-		}()
-	}
-
-	// Distribute work
-	for i := 0; i < numWorkers; i++ {
-		start := i * chunkSize
-		end := start + chunkSize
-		if i == numWorkers-1 {
-			end = 10000
+	for w := 0; w < workers; w++ {
+		start := w * chunk
+		end := min(start+chunk, 10000)
+		if start >= end {
+			break
 		}
-		workChan <- work{start: start, end: end}
+		wg.Add(1)
+		go func(start, end int) {
+			defer wg.Done()
+			for i := start; i < end; i++ { // this worker's share of the 10k outer iterations
+				sum := 0
+				for j := 0; j < 100000; j++ { // 100k inner loop iterations, per outer loop iteration
+					sum += j % input // Simple sum
+				}
+				a[i] = sum + r // Add a random value to each element in array
+			}
+		}(start, end)
 	}
-	close(workChan)
-
 	wg.Wait()
-	fmt.Println(a[r])
+
+	fmt.Println(a[r]) // Print out a single element from the array
 }
