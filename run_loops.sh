@@ -99,7 +99,13 @@ fi
 
 if [ -f ts/loop.ts ] && command -v tsc >/dev/null 2>&1; then
     echo "Compiling TypeScript..."
-    (cd ts && tsc loop.ts) || echo "warning: TypeScript compilation failed" >&2
+    # tsc needs ts/node_modules for @types/node; newer tsc versions also
+    # reject per-file compilation when a tsconfig.json is present (TS5112),
+    # so build the project with its config.
+    if [ ! -d ts/node_modules ] && command -v npm >/dev/null 2>&1; then
+        (cd ts && npm ci --silent --no-audit --no-fund) || echo "warning: npm ci for TypeScript failed" >&2
+    fi
+    tsc -p ts || echo "warning: TypeScript compilation failed" >&2
 fi
 
 if [ -f zig/loop.zig ] && command -v zig >/dev/null 2>&1; then

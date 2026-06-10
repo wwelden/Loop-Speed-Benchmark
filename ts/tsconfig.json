@@ -6,9 +6,8 @@
         "esModuleInterop": true,
         "skipLibCheck": true,
         "forceConsistentCasingInFileNames": true,
-        "outDir": "./dist",
         "types": ["node"]
     },
-    "include": ["*.ts"],
+    "include": ["loop.ts"],
     "exclude": ["node_modules"]
 }
