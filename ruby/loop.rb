@@ -18,19 +18,14 @@ rescue ArgumentError
   exit 1
 end
 
-# Initialize random number generator
-r = rand(10000)
-a = Array.new(10000, 0)
+r = rand(10000)             # Get a random number 0 <= r < 10k
+a = Array.new(10000, 0)     # Array of 10k elements initialized to 0
 
-# Pre-calculate the modulo sums for better performance
-mod_sums = Array.new(input, 0)
-input.times do |i|
-  mod_sums[i] = (0...100000).sum { |j| j % input }
+10000.times do |i|          # 10k outer loop iterations
+  100000.times do |j|       # 100k inner loop iterations, per outer loop iteration
+    a[i] = a[i] + j % input # Simple sum
+  end
+  a[i] += r                 # Add a random value to each element in array
 end
 
-# Fill the array using the pre-calculated sums
-10000.times do |i|
-  a[i] = mod_sums[i % input] + r
-end
-
-puts a[r]
+puts a[r]                   # Print out a single element from the array

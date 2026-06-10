@@ -1,0 +1,30 @@
+# OS cruft
+.DS_Store
+
+# Benchmark outputs
+results.csv
+*.png
+venv/
+
+# Compiled binaries and build artifacts
+asm/loop
+c/loop
+cpp/loop
+go/loop
+goOptimized/loop
+swift/loop
+haskell/loop
+haskell/*.hi
+haskell/*.o
+zig/loop
+zig/*.o
+java/*.class
+kotlin/*.jar
+scala/*.jar
+scala/.bsp/
+scala/.scala-build/
+rust/target/
+csharp/bin/
+csharp/obj/
+ts/loop.js
+ts/node_modules/

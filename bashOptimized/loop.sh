@@ -1,46 +1,33 @@
 #!/bin/bash
+# "Optimized" Bash: pure Bash is far too slow for this benchmark (the disabled
+# bash/loop.sh would take hours), so this script cheats openly -- it compiles
+# the project's own C implementation and runs that. The runner reports it as
+# "Bash (via C)"; the number mostly measures gcc compile time plus the C
+# runtime, not Bash loop performance.
 
-# Check if argument is provided
+set -euo pipefail
+
 if [ $# -ne 1 ]; then
     echo "Please provide a number as command line argument" >&2
     exit 1
 fi
 
-# Check if argument is a valid non-zero integer
 if ! [[ "$1" =~ ^[0-9]+$ ]] || [ "$1" -eq 0 ]; then
     echo "Please provide a valid non-zero integer" >&2
     exit 1
 fi
 
-# Compile and run C program that does the heavy lifting
-cat > /tmp/loop.c << 'EOF'
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+C_SRC="$SCRIPT_DIR/../c/loop.c"
 
-int main(int argc, char *argv[]) {
-    int input = atoi(argv[1]);
-    int a[10000];
-    int r = rand() % 10000;
+if [ ! -f "$C_SRC" ]; then
+    echo "Cannot find the C implementation (expected at $C_SRC)" >&2
+    exit 1
+fi
 
-    for (int i = 0; i < 10000; i++) {
-        long long sum = 0;
-        for (int j = 0; j < 100000; j++) {
-            sum += j % input;
-        }
-        a[i] = sum + r;
-    }
+TMP_DIR="$(mktemp -d)"
+trap 'rm -rf "$TMP_DIR"' EXIT
 
-    printf("%d\n", a[r]);
-    return 0;
-}
-EOF
-
-# Compile with optimization flags
-gcc -O3 /tmp/loop.c -o /tmp/loop
-
-# Run the compiled program
-/tmp/loop "$1"
-
-# Clean up
-rm /tmp/loop.c /tmp/loop
+# Compile the exact same C source the C benchmark uses, then run it
+gcc -O3 "$C_SRC" -o "$TMP_DIR/loop"
+"$TMP_DIR/loop" "$1"

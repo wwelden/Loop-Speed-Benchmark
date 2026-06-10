@@ -1,13 +1,13 @@
 # LoopSpeed2
 
-A comprehensive benchmarking project that compares the performance of various programming languages when executing computationally intensive loops. This project helps developers understand the performance characteristics of different programming languages in a controlled environment.
+A benchmarking project that compares how different programming languages perform on the same CPU-bound nested-loop workload. Every implementation runs the identical algorithm with the identical source-level pattern, so the differences you see come from the language implementation, not the code.
 
 ![performance_comparison](https://github.com/user-attachments/assets/8651199a-1f6d-4267-865b-077c02e2a5fa)
 ![detailed_performance](https://github.com/user-attachments/assets/c50c4a3a-ad8c-49ac-8afe-53e35cea45e2)
 
 ## Project Overview
 
-This project implements a standardized loop-based computation in multiple programming languages to compare their performance. The core algorithm performs nested loops with array operations, which is a common pattern in many real-world applications.
+Each language implements the same loop-based computation: 10,000 outer iterations, each performing 100,000 modulo-and-add operations against an array element (one billion operations total). The divisor `u` comes from the command line so compilers cannot constant-fold the work away.
 
 ### Core Algorithm Pseudocode
 
@@ -29,22 +29,23 @@ for i in range(10000):
 return a[r]  # Return single element from array
 ```
 
+Every standard implementation performs the array read/write inside the inner loop, exactly as written above — no local accumulator variables, no precomputed sums. For input 7, the result is always `299995 + r`, which makes it easy to spot an implementation that isn't doing the real work.
+
 ## Supported Languages
 
-The project includes implementations in the following languages:
-- Assembly (asm)
-- Bash (disabled)
-- Bash (with C)
+- Assembly (ARM64 macOS; hand-written hot loop, libc for I/O)
+- Bash — pure Bash exists in `bash/` but is disabled by default (10⁹ interpreted shell operations take hours)
+- Bash (via C) — openly cheats by compiling and running the C implementation; see below
 - C
 - C++
-- C# (JIT)
-- Go (standard and optimized)
-- Haskell
+- C# (.NET)
+- Go (plus a parallelized `GoOptimized` variant; see below)
+- Haskell (GHC, compiled with `-O2`)
 - Java
-- JavaScript
+- JavaScript (Node)
 - Kotlin
-- Lua (JIT and AOT)
-- Perl (JIT and AOT)
+- Lua (interpreter and LuaJIT)
+- Perl
 - PHP
 - Python
 - R
@@ -52,187 +53,107 @@ The project includes implementations in the following languages:
 - Rust
 - Scala
 - Swift
-- TypeScript
+- TypeScript (compiled with tsc, run on Node)
 - Zig
+
+Languages whose toolchains aren't installed are skipped automatically.
 
 ## Prerequisites
 
-To run the benchmarks, you'll need:
-- A Unix-like environment (Linux, macOS, etc.)
-- Various language compilers and interpreters installed
-- Python 3.x (for visualization)
-- Virtual environment (recommended for Python dependencies)
+- A Unix-like environment (the assembly implementation is ARM64-macOS-specific; everything else is portable)
+- Compilers/interpreters for whichever languages you want to benchmark
+- [hyperfine](https://github.com/sharkdp/hyperfine) — optional but recommended; the runner falls back to bash's builtin `time` without it
+- Python 3 with matplotlib for the visualizations
 
-## Quick Start Example
-
-Here's exactly what you need to run to get the visualization working:
+## Quick Start
 
 ```bash
-# 1. Create and activate virtual environment
-python3 -m venv venv
-source venv/bin/activate  # On macOS/Linux
-# or
-.\venv\Scripts\activate  # On Windows
+# Run the benchmarks (default input value: 7).
+# Prints per-language stats and writes results.csv
+./run_loops.sh 7
 
-# 2. Install required packages
-pip install matplotlib numpy
+# Chart the results
+python3 -m venv venv && source venv/bin/activate
+pip install matplotlib
+python3 visualize_performance.py --csv results.csv
 
-# 3. Run the visualization (using default input value of 7)
-python visualize_performance.py
+# Or let the script run the benchmarks itself
+python3 visualize_performance.py 7
 
-# 4. For scaling analysis with specific input values
-python visualize_performance.py --scaling 3 5 7 9 11
-
-# 5. When done, deactivate the virtual environment
-deactivate
+# Scaling analysis across several input values (fast languages only by default)
+python3 visualize_performance.py --scaling 3 5 7 9 11
 ```
 
-The script will generate two visualization files:
-- `performance_comparison.png`: Basic performance comparison
-- `detailed_performance.png`: Detailed categorization of results
+Generated files: `results.csv`, `performance_comparison.png`, `detailed_performance.png`, and (in scaling mode) `scaling_analysis.png`.
 
-## Running the Benchmarks
+A full run including the slow interpreters (Python, Perl, Ruby, R, plain Lua) takes a long time — R alone can take the better part of an hour. Use `ONLY`/`SKIP` to control which languages run.
 
-### Basic Usage
+## Runner Options
 
-1. Clone the repository
-2. Make the run script executable:
-   ```bash
-   chmod +x run_loops.sh
-   ```
-3. Run the benchmarks:
-   ```bash
-   ./run_loops.sh [input_number]
-   ```
-   If no input number is provided, it defaults to 7.
+`run_loops.sh` accepts the input value as its only argument and reads these environment variables:
 
-### With Visualization
+| Variable | Default | Meaning |
+|----------|---------|---------|
+| `RUNS` | `3` | Timed runs per language |
+| `WARMUP` | `1` | Untimed warmup runs per language |
+| `ONLY` | _(unset)_ | Comma-separated list of languages to run, e.g. `ONLY="C,Rust,Go"` |
+| `SKIP` | _(unset)_ | Comma-separated list of languages to skip |
+| `RESULTS_FILE` | `results.csv` | Where to write the CSV (`language,mean_s,min_s,max_s,runs`) |
 
-To generate performance visualizations:
+Example:
 
-1. Set up and activate the Python virtual environment:
-   ```bash
-   # Create virtual environment
-   python3 -m venv venv
+```bash
+ONLY="C,C++,Rust,Go,Zig" RUNS=5 ./run_loops.sh 7
+```
 
-   # Activate virtual environment
-   # On macOS/Linux:
-   source venv/bin/activate
-   # On Windows:
-   .\venv\Scripts\activate
+The input value must be between 1 and 40000. Above ~43000 the per-element sum exceeds 2³¹, so languages using 32-bit accumulators (C, Rust, Zig, JavaScript's `Int32Array`, …) would overflow while big-integer languages like Python computed different values.
 
-   # Install required packages
-   pip install matplotlib numpy
-   ```
+## Methodology & Caveats
 
-2. Run the visualization script:
-   ```bash
-   python visualize_performance.py [input_number]
-   ```
+- Each language gets `WARMUP` untimed runs followed by `RUNS` timed runs; the CSV records mean, min, and max.
+- When hyperfine is installed it does the timing (with proper statistical output); otherwise the runner uses bash's builtin `time`.
+- Timings are **whole-process wall-clock times**: they include interpreter/VM startup. That's negligible for a C binary but meaningful for JVM languages (~0.1–0.4 s of JVM startup for Java/Kotlin, plus the Scala CLI launcher for Scala). Treat small differences between JVM languages accordingly.
+- JIT-compiled runtimes (JVM, .NET, V8, LuaJIT) may also spend part of the measured time warming up their JIT within each process.
+- Results depend on hardware, OS, compiler versions, and system load. Compare languages within one run on one machine, not across machines.
 
-3. For scaling analysis:
-   ```bash
-   python visualize_performance.py --scaling [input_values...]
-   ```
+## Optimized Variants
 
-4. When done, you can deactivate the virtual environment:
-   ```bash
-   deactivate
-   ```
+Two deliberately non-standard implementations are included. Both still produce the correct result, but read their numbers with the caveats in mind:
 
-## Output
+### GoOptimized
+Performs the **same 10⁹ operations** as the standard Go version, with two implementation-level optimizations: the outer loop is split across all CPU cores, and each element's sum accumulates in a local variable instead of array reads/writes. It demonstrates what idiomatic-but-tuned code in the same language buys you — the algorithm is unchanged.
 
-The script will:
-1. Compile all necessary programs
-2. Run the benchmarks
-3. Display execution times for each language
-4. Generate visualizations (if using the visualization script)
-
-## Visualization Features
-
-The visualization script provides:
-- Bar chart comparison of execution times
-- Detailed visualization by language category (Compiled, JVM-based, Scripting)
-- Scaling analysis across different input values
-- Performance comparison with logarithmic scale for better visualization of large differences
-
-## Project Structure
-
-- `run_loops.sh`: Main script to compile and run all implementations
-- `visualize_performance.py`: Python script for generating performance visualizations
-- Language-specific directories (e.g., `c/`, `python/`, `rust/`, etc.): Contain implementations in each language
-- `asmOptimized/`: Contains optimized assembly implementation
-- `goOptimized/`: Contains optimized Go implementation
-
-## Notes
-
-- The benchmark focuses on CPU-intensive operations
-- Results may vary based on:
-  - Hardware specifications
-  - Operating system
-  - Compiler versions
-  - System load
-- Some languages may require specific compiler flags or runtime environments
+### Bash (via C)
+Pure Bash is hopeless for this workload, so `bashOptimized/loop.sh` openly cheats: it compiles the project's own `c/loop.c` with `gcc -O3` and runs that. Its number mostly measures gcc's compile time plus the C runtime — it's included as a joke with a footnote, not as a Bash result.
 
 ## JIT Compilation
 
-Some implementations in this project utilize Just-In-Time (JIT) compilation to improve performance:
+Several implementations run on JIT-compiling runtimes:
 
-- **LuaJIT**: An optimized version of Lua that uses JIT compilation
-- **Perl JIT**: Perl implementation using the JIT compiler (via `-MO=JIT` flag)
-- **JavaScript**: Modern JavaScript engines (V8, SpiderMonkey) use JIT compilation
-- **Java**: Uses the HotSpot JVM with adaptive JIT compilation
-- **C#**: Uses the .NET runtime with JIT compilation
+- **LuaJIT**: the same `lua/loop.lua` source, run under LuaJIT instead of the Lua interpreter
+- **JavaScript / TypeScript**: V8's optimizing JIT via Node
+- **Java / Kotlin / Scala**: HotSpot JVM with adaptive JIT
+- **C#**: .NET runtime JIT
 
-JIT compilation can significantly improve performance by:
-- Compiling frequently executed code paths to native machine code
-- Optimizing code based on runtime behavior
-- Reducing interpretation overhead
-- Enabling dynamic optimization based on actual usage patterns
+JIT compilation improves hot-loop performance dramatically, but introduces warm-up cost inside each measured process — part of why interpreted-with-JIT languages land between the AOT-compiled and purely interpreted groups.
 
-Note that JIT compilation may introduce warm-up overhead, where the first few runs might be slower as the JIT compiler analyzes and optimizes the code.
+## Project Structure
 
-## Optimization Techniques
+- `run_loops.sh` — compiles whatever toolchains are available, times each implementation, writes `results.csv`
+- `visualize_performance.py` — turns `results.csv` into charts; can also drive the runner (including scaling sweeps)
+- One directory per language (`c/`, `python/`, `rust/`, …) containing a single `loop.*` implementation
+- `goOptimized/`, `bashOptimized/` — the two non-standard variants described above
+- `bash/` — the pure-Bash implementation, disabled by default
 
-This project showcases various optimization techniques in different language implementations. Some notable examples include:
-
-### HaskellOptimized
-- Uses unboxed vectors (`Data.Vector.Unboxed`) for better memory layout
-- Implements strict evaluation with `BangPatterns` language extension
-- Uses more efficient loop constructs
-- Compiled with `-O2 -funbox-strict-fields -fllvm` flags for maximum performance
-
-### SwiftOptimized
-- Uses `UnsafeMutableBufferPointer` for direct memory access
-- Pre-calculates modulo results to avoid repetitive calculations
-- Implements batch processing with stride for better cache utilization
-- Compiled with `-O -whole-module-optimization` flags
-- Uses memory management techniques like `defer` for proper cleanup
-
-### GoOptimized
-- Uses more efficient data structures
-- Implements loop unrolling for better performance
-- Takes advantage of Go's compiler optimization flags
-
-### BashOptimized
-- Uses built-in operations over external calls
-- Reduces subshell usage
-- Minimizes command substitution overhead
-
-Optimization principles applied across languages:
-1. **Memory optimization**: Efficient data structures and memory layouts
-2. **Algorithm optimization**: Better algorithms and loop patterns
-3. **Compiler optimization**: Using language-specific compiler flags
-4. **Cache optimization**: Improving cache locality and reducing cache misses
-5. **Instruction-level parallelism**: Loop unrolling and vectorization where applicable
+Build artifacts (binaries, jars, `.class` files, `csharp/bin`, `rust/target`, …) are gitignored.
 
 ## Contributing
 
 Feel free to contribute by:
-1. Adding implementations in new languages
-2. Optimizing existing implementations
+1. Adding implementations in new languages — keep the array read/write inside the inner loop so the comparison stays fair
+2. Adding interesting runtime variants (PyPy, Bun, Deno, GraalVM, …)
 3. Improving the visualization capabilities
-4. Adding more detailed documentation
+4. Improving documentation
 
 ## License
 
