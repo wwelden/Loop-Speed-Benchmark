@@ -146,15 +146,3 @@ JIT compilation improves hot-loop performance dramatically, but introduces warm-
 - `bash/` — the pure-Bash implementation, disabled by default
 
 Build artifacts (binaries, jars, `.class` files, `csharp/bin`, `rust/target`, …) are gitignored.
-
-## Contributing
-
-Feel free to contribute by:
-1. Adding implementations in new languages — keep the array read/write inside the inner loop so the comparison stays fair
-2. Adding interesting runtime variants (PyPy, Bun, Deno, GraalVM, …)
-3. Improving the visualization capabilities
-4. Improving documentation
-
-## License
-
-This project is open source and available under the MIT License.
